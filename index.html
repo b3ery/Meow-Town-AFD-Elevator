@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeowTower AFD</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="CSS/style.css">
+</head>
+<body>
+
+<!-- TELA DE START -->
+<div id="screen-start">
+  <canvas id="start-bg"></canvas>
+  <div class="start-content">
+    <div class="start-logo">
+      <div class="start-logo-meow">MEOW</div>
+      <div class="start-logo-tower">TOWER</div>
+      <div class="start-logo-sub">AFD ELEVADOR</div>
+    </div>
+    <div class="start-btns">
+      <button class="start-btn-play" onclick="mostrarSelecao()">
+        ▶ &nbsp;START
+      </button>
+      <button class="start-btn-candy" onclick="window.open('https://b3ery.github.io/MachineCandy/','_blank')">
+        🍬 &nbsp;MEOW CANDY
+      </button>
+    </div>
+    <div class="start-footer">PRESSIONE START PARA JOGAR</div>
+  </div>
+</div>
+
+<!-- TELA DE SELEÇÃO -->
+<div id="screen-select" style="display:none">
+  <canvas id="select-city-bg"></canvas>
+  <div class="sel-title">✦ MEOW TOWER ✦<br>AFD ELEVADOR</div>
+  <div class="sel-cards">
+    <div class="sel-card pink" onclick="selecionarPersonagem('mulher')">
+      <img id="sel-img-mulher" class="sel-char-img" src="" alt="">
+      <div class="sel-char-name">👩 Helo</div>
+      <button class="sel-btn">JOGAR</button>
+    </div>
+    <div class="sel-card cyan" onclick="selecionarPersonagem('homem')">
+      <img id="sel-img-homem" class="sel-char-img" src="" alt="">
+      <div class="sel-char-name">👨 Pedro</div>
+      <button class="sel-btn">JOGAR</button>
+    </div>
+    <div class="sel-card orange" onclick="selecionarPersonagem('gato')">
+      <img id="sel-img-gato" class="sel-char-img" src="" alt="">
+      <div class="sel-char-name">🐱 Apollo</div>
+      <button class="sel-btn">JOGAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-l">📍 <span id="hud-floor">LOBBY</span> &nbsp;|&nbsp; <span id="hud-state" style="color:var(--yellow)">LOBBY_IDLE</span></div>
+  <button class="hbtn fin" onclick="abrirRelatorio(true)">🏁 FINALIZAR</button>
+</div>
+
+<!-- VIEWPORT -->
+<div id="viewport">
+  <div id="world">
+
+    <!-- ZONE 0: MEOW CANDY -->
+    <div class="zone" id="zone-candy">
+      <div class="ceiling"></div>
+      <div class="wall" style="background:linear-gradient(180deg,#0d0028,#1a0040);"></div>
+      <div class="floor-grid"></div>
+      <div class="neon-string"></div>
+      <div style="position:absolute;top:5%;left:50%;transform:translateX(-50%);width:clamp(280px,34vw,440px);height:clamp(160px,22vh,260px);background:#050010;border:4px solid #2a0060;border-radius:6px;overflow:hidden;z-index:5;box-shadow:0 0 20px rgba(80,40,200,.5);">
+        <canvas id="candy-city-canvas" style="width:100%;height:100%;display:block;"></canvas>
+      </div>
+      <div id="candy-building-wrap" onclick="abrirLojaDeDolces()">
+        <img id="candy-store-img" src="" style="width:clamp(200px,25vw,320px);height:auto;image-rendering:pixelated;display:block;" alt="Meow Candy">
+      </div>
+      <div id="candy-store-hint" style="position:absolute;bottom:calc(18% - 32px);left:50%;transform:translateX(-50%);display:none;z-index:15;pointer-events:none;">
+        <div style="background:#fff;border:2px solid #333;color:#111;font-family:'Press Start 2P',monospace;font-size:clamp(5px,.65vw,8px);padding:6px 12px;border-radius:6px;box-shadow:2px 2px 0 #333;white-space:nowrap;">[E] Entrar na Meow Candy 🍬</div>
+      </div>
+      <div id="candy-stand-wrap">
+        <img id="candy-stand-img" src="" style="height:clamp(160px,24vh,250px);image-rendering:pixelated;object-fit:contain;display:block;" alt="stand">
+        <div id="stand-hint" style="position:absolute;bottom:102%;left:50%;transform:translateX(-50%);white-space:nowrap;color:#111;font-family:'Press Start 2P',monospace;font-size:clamp(4px,.55vw,7px);background:#fff;border:2px solid #333;padding:5px 10px;border-radius:6px;box-shadow:2px 2px 0 #333;display:none;pointer-events:none;">▶ [E] Pedir</div>
+        <div id="stand-btns" style="position:absolute;bottom:110%;left:0;display:none;flex-direction:column;gap:6px;background:rgba(8,0,20,.97);border:2px solid #ff6eb4;border-radius:10px;padding:10px 8px;z-index:20;min-width:140px;box-shadow:0 0 20px rgba(255,110,180,.4);">
+          <div style="color:#ff9fd6;font-size:clamp(5px,.65vw,7px);text-align:center;margin-bottom:2px;letter-spacing:1px;">☕ CARDÁPIO</div>
+          <button class="stand-btn" onclick="pegarItemStand('cafe')">☕ Café</button>
+          <button class="stand-btn" onclick="pegarItemStand('suco')">🍊 Suco</button>
+          <button class="stand-btn" onclick="pegarItemStand('sanduiche')">🥪 Sanduíche</button>
+          <button class="stand-btn" style="border-color:rgba(255,110,180,.3);color:rgba(255,255,255,.4);" onclick="document.getElementById('stand-btns').style.display='none'">✕ Fechar</button>
+        </div>
+      </div>
+      <img id="candy-mesa-l" src="" style="position:absolute;bottom:18%;left:58%;height:clamp(100px,14vh,140px);image-rendering:pixelated;object-fit:contain;object-position:bottom;z-index:7;" alt="">
+      <img id="candy-mesa-extra" src="" style="position:absolute;bottom:18%;left:20%;height:clamp(100px,14vh,140px);image-rendering:pixelated;object-fit:contain;object-position:bottom;z-index:7;" alt="">
+      <img id="candy-mesa-r" src="" style="position:absolute;bottom:18%;left:70%;height:clamp(100px,14vh,140px);image-rendering:pixelated;object-fit:contain;object-position:bottom;z-index:7;" alt="">
+      <div class="candy-neon-sign" style="right:3%;top:12%;">🍰 SWEETS</div>
+    </div>
+
+    <!-- ZONE 1: LOBBY + ELEVATOR -->
+    <div class="zone" id="zone-lobby">
+      <div class="ceiling"></div>
+      <div class="wall"></div>
+      <div class="floor-grid"></div>
+      <div class="neon-string"></div>
+      <div class="pillar" style="left:10%;"><div class="pillar-cap"></div></div>
+      <div class="pillar" style="right:10%;"><div class="pillar-cap"></div></div>
+      <div class="lobby-sign">🏢 MEOW TOWER<span>TÉRREO · RECEPÇÃO · ELEVADOR</span></div>
+      <div class="dir-sign dir-sign-candy">← 🍬 MEOW CANDY</div>
+      <div class="dir-sign dir-sign-recep">🛋️ LOUNGE →</div>
+      <div id="elevator-wrap">
+        <div class="elev-fascia">
+          <div class="elev-display">
+            <span id="elev-num">T</span>
+            <div class="elev-arrows-disp">
+              <span id="arr-up">▲</span>
+              <span id="arr-dn">▼</span>
+            </div>
+          </div>
+        </div>
+        <div class="elev-body">
+          <div class="elev-inside"><div class="elev-inside-light"></div></div>
+          <div class="elev-door elev-door-l" id="door-l"></div>
+          <div class="elev-door elev-door-r" id="door-r"></div>
+        </div>
+        <div class="elev-btn-panel">
+          <button class="elev-call-btn up" onclick="entrarInteriorElevador()" title="Chamar elevador">▲</button>
+        </div>
+        <div class="elev-base"></div>
+      </div>
+      <img id="recep-img" src="" class="recep-char" alt="">
+      <div id="recep-desk-wrap">
+        <div class="recep-desk-top"><span class="recep-desk-nameplate">✦ RECEPÇÃO ✦</span></div>
+        <div class="recep-desk-front"></div>
+        <div class="recep-interact-hint" id="recep-hint">▶ [E] Falar</div>
+      </div>
+    </div>
+
+    <!-- ZONA 2: LOUNGE -->
+    <div class="zone" id="zone-recep">
+      <div class="ceiling"></div>
+      <div class="wall"></div>
+      <div class="floor-grid"></div>
+      <div class="city-window city-window-l" id="cwin-l"><canvas class="city-canvas" id="ccanvas-l"></canvas></div>
+      <div class="city-window city-window-lc" id="cwin-lc"><canvas class="city-canvas" id="ccanvas-lc"></canvas></div>
+      <div class="city-window city-window-rc" id="cwin-rc"><canvas class="city-canvas" id="ccanvas-rc"></canvas></div>
+      <div class="city-window city-window-r" id="cwin-r"><canvas class="city-canvas" id="ccanvas-r"></canvas></div>
+      <img id="recep-balaco" src="" class="lounge-img" style="position:absolute;bottom:18%;left:8%;height:clamp(98px,14vh,148px);z-index:4;object-fit:contain;object-position:bottom;image-rendering:pixelated;" alt="">
+      <img id="recep-sofa" src="" class="lounge-img" style="position:absolute;bottom:18%;left:22%;height:clamp(120px,16vh,175px);z-index:4;object-fit:contain;object-position:bottom;image-rendering:pixelated;" alt="">
+      <img id="recep-poltrona" src="" class="lounge-img" style="position:absolute;bottom:18%;left:42%;height:clamp(90px,12vh,135px);z-index:4;object-fit:contain;object-position:bottom;image-rendering:pixelated;" alt="">
+      <img id="recep-mesinha" src="" class="lounge-img" style="position:absolute;bottom:18%;left:58%;height:clamp(72px,10vh,108px);z-index:4;object-fit:contain;object-position:bottom;image-rendering:pixelated;" alt="">
+    </div>
+
+    <img id="player-item" src="" alt="" style="position:absolute;display:none;z-index:16;image-rendering:pixelated;pointer-events:none;">
+    <div id="player" onclick="consumirItem()">
+      <img id="player-img" src="" alt="Player">
+      <div id="player-shadow"></div>
+    </div>
+  </div>
+  <div class="recep-bubble" id="recep-bubble">
+    🐱 <span style="color:var(--pink)">Recepcionista:</span> Bem-vindo ao Meow Tower! Use o elevador para explorar os andares! ✨
+  </div>
+</div>
+
+<!-- ANIMAÇÃO DE ENTRADA DO ANDAR -->
+<div id="floor-entry-anim" style="display:none;position:fixed;inset:0;z-index:500;background:#0a0010;align-items:flex-end;justify-content:center;padding-bottom:18%;">
+  <div style="position:relative;width:clamp(130px,16vw,200px);">
+    <div id="fea-fascia" style="width:100%;height:clamp(40px,6vh,65px);background:linear-gradient(180deg,#404040,#2c2c2c);border:3px solid #666;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;">
+      <div style="background:#050505;border:2px solid #333;border-radius:4px;padding:3px 10px;display:flex;align-items:center;gap:8px;">
+        <span id="fea-num" style="color:#ff2222;font-size:clamp(16px,2.2vw,26px);font-family:'Press Start 2P',monospace;text-shadow:0 0 10px #ff2222;">T</span>
+      </div>
+    </div>
+    <div style="position:relative;width:100%;height:clamp(220px,36vh,380px);background:linear-gradient(180deg,#4e4e4e,#3c3c3c);border-left:3px solid #666;border-right:3px solid #666;overflow:hidden;">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,#1a0a40,#2a1060,#1a0840);display:flex;align-items:center;justify-content:center;">
+        <div style="width:60%;height:40%;background:radial-gradient(ellipse,rgba(199,125,255,.3),transparent);border-radius:50%;"></div>
+      </div>
+      <img id="fea-player" src="" style="position:absolute;bottom:0;width:auto;height:clamp(100px,18vh,160px);image-rendering:pixelated;object-fit:contain;transition:none;">
+      <div id="fea-door-l" style="position:absolute;top:0;bottom:0;left:0;width:50%;background:linear-gradient(90deg,#606060 0%,#909090 25%,#707070 55%,#505050 100%);transform-origin:left center;transition:transform .7s cubic-bezier(.4,0,.2,1);"></div>
+      <div id="fea-door-r" style="position:absolute;top:0;bottom:0;right:0;width:50%;background:linear-gradient(90deg,#505050 0%,#707070 45%,#909090 75%,#606060 100%);transform-origin:right center;transition:transform .7s cubic-bezier(.4,0,.2,1);"></div>
+    </div>
+    <div style="width:calc(100% + 14px);margin-left:-7px;height:clamp(10px,1.8vh,16px);background:linear-gradient(180deg,#d4c9b0,#b8aa90);border-radius:0 0 4px 4px;"></div>
+  </div>
+</div>
+
+<!-- CENA DO ANDAR -->
+<div id="floor-scene">
+  <div id="floor-bg"></div>
+  <div id="floor-content">
+    <div id="floor-hud">
+      <div id="floor-hud-title">📍 <span id="floor-hud-name"></span></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="hbtn fin" onclick="abrirRelatorio(true)">🏁 FINALIZAR</button>
+        <button class="floor-back-btn" onclick="sairAndar()">← VOLTAR</button>
+      </div>
+    </div>
+    <div id="floor-world">
+      <div id="floor-inner">
+        <div class="f-ceiling"></div>
+        <div class="f-wall" id="floor-wall"></div>
+        <div class="f-floor-grid" id="floor-fgrid"></div>
+        <div id="floor-furni"></div>
+        <div id="floor-player">
+          <img id="floor-player-img" src="" alt="Player">
+        </div>
+        <div id="floor-elev-wrap" onclick="entrarInteriorElevador()">
+          <div class="elev-fascia">
+            <div class="elev-display">
+              <span id="floor-elev-num" style="color:#22ff22;font-size:clamp(16px,2.2vw,26px);font-family:'Press Start 2P',monospace;text-shadow:0 0 10px #22ff22;min-width:1.2ch;text-align:center;">1</span>
+              <div class="elev-arrows-disp"><span style="color:#00cc00;opacity:.25;">▲</span><span style="color:#00cc00;opacity:.25;">▼</span></div>
+            </div>
+          </div>
+          <div class="elev-body">
+            <div class="elev-inside"><div class="elev-inside-light"></div></div>
+            <div class="elev-door elev-door-l" id="floor-door-l"></div>
+            <div class="elev-door elev-door-r" id="floor-door-r"></div>
+          </div>
+          <div class="elev-btn-panel" id="floor-elev-btns"></div>
+          <div class="elev-base"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESTAURANTE MENU MODAL -->
+<div class="modal" id="res-menu-modal">
+  <div class="modal-box" style="max-width:600px;width:95vw;">
+    <button class="m-close" onclick="fecharMenuRestaurante()">✕</button>
+    <div class="modal-title" style="color:#ff9fd6;">🍽️ Cardápio do Restaurante</div>
+    <div id="res-menu-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- INTERIOR DO ELEVADOR -->
+<div id="elev-interior">
+  <div id="elev-interior-walls"></div>
+  <canvas id="shaft-canvas"></canvas>
+  <div id="elev-floor-strip">
+    <div class="elev-strip-arrows">
+      <span id="int-arr-up" class="elev-strip-arr">▲</span>
+      <span id="int-arr-dn" class="elev-strip-arr">▼</span>
+    </div>
+    <div id="elev-strip-num">T</div>
+    <div style="color:var(--cream);font-size:clamp(5px,.7vw,8px);opacity:.7;" id="elev-strip-label">Térreo</div>
+  </div>
+  <div id="elev-interior-box">
+    <div id="elev-keypad">
+      <div id="elev-floor-indicator"><span id="elev-ind-num">T</span></div>
+      <div class="elev-int-btns">
+        <button class="elev-int-btn" id="ibtn-3" onclick="selecionarAndar(3)">3</button>
+        <button class="elev-int-btn" id="ibtn-2" onclick="selecionarAndar(2)">2</button>
+        <button class="elev-int-btn" id="ibtn-1" onclick="selecionarAndar(1)">1</button>
+        <button class="elev-int-btn current" id="ibtn-0" onclick="selecionarAndar(0)">T</button>
+        <button class="elev-door-btn open-btn" onclick="abrirPortaElev()" title="Abrir porta" style="margin:0 auto;">◀▶</button>
+        <button class="elev-door-btn close-btn" onclick="fecharPortaElev()" title="Fechar porta" style="margin:0 auto;">▶◀</button>
+      </div>
+    </div>
+    <div id="elev-right">
+      <div id="elev-screen"></div>
+      <img id="elev-player-int" src="" alt="">
+    </div>
+  </div>
+  <div id="int-door-l"></div>
+  <div id="int-door-r"></div>
+</div>
+
+<!-- TELA DE VIAGEM -->
+<div id="elev-travel">
+  <div id="travel-bg"></div>
+  <div id="travel-floor-labels"></div>
+  <div id="travel-elevator">
+    <div class="tv-fascia">
+      <div class="tv-display">
+        <span id="tv-num">T</span>
+        <div class="tv-arrows"><span id="tv-arr-up">▲</span><span id="tv-arr-dn">▼</span></div>
+      </div>
+    </div>
+    <div class="tv-body">
+      <div class="tv-door tv-door-l" id="tv-door-l"></div>
+      <div class="tv-door tv-door-r" id="tv-door-r"></div>
+    </div>
+    <div class="tv-base"></div>
+  </div>
+</div>
+
+<!-- CANDY MODAL -->
+<div class="modal" id="candy-modal">
+  <div class="modal-box">
+    <button class="m-close" onclick="fecharModal('candy-modal')">✕ FECHAR</button>
+    <div class="modal-title">🍬 MEOW CANDY</div>
+    <div id="candy-items"></div>
+  </div>
+</div>
+
+<!-- MODAL DE RELATÓRIO -->
+<div class="modal" id="report-modal">
+  <div class="modal-box rpt-box">
+    <div class="rpt-title">🛗 RELATÓRIO AFD — ELEVADOR MEOW TOWER</div>
+
+    <div class="rpt-cols">
+      <!-- Coluna esquerda: resumo + diagrama -->
+      <div class="rpt-col-left">
+        <div class="rpt-sec">
+          <div class="rpt-sec-h">📊 Resumo da Sessão</div>
+          <div class="rpt-summary" id="afd-summary"></div>
+        </div>
+        <div class="rpt-sec">
+          <div class="rpt-sec-h">🔵 Diagrama AFD — Estados e Transições</div>
+          <canvas id="afd-canvas" width="420" height="320" style="width:100%;border-radius:8px;background:#0a0018;display:block;"></canvas>
+        </div>
+      </div>
+      <!-- Coluna direita: trajetória + log -->
+      <div class="rpt-col-right">
+        <div class="rpt-sec">
+          <div class="rpt-sec-h">🗺️ Estados Visitados</div>
+          <div class="sw" id="afd-states"></div>
+        </div>
+        <div class="rpt-sec">
+          <div class="rpt-sec-h">🛤️ Trajetória do Elevador</div>
+          <div class="rpt-path" id="afd-path"></div>
+        </div>
+        <div class="rpt-sec">
+          <div class="rpt-sec-h">📝 Log de Transições</div>
+          <div class="rpt-log" id="afd-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rpt-btn-row">
+      <button class="rpt-btn" onclick="fecharModal('report-modal')">✕ Fechar</button>
+      <button class="rpt-btn danger" onclick="voltarSelecao()">↩ Nova Sessão</button>
+    </div>
+  </div>
+</div>
+
+<!-- HUD do AFD em tempo real (durante viagem) -->
+<div id="afd-live" style="display:none;position:fixed;bottom:60px;right:16px;z-index:500;background:rgba(10,0,30,.85);border:1px solid rgba(199,125,255,.3);border-radius:8px;padding:8px 12px;font-family:'Press Start 2P',monospace;font-size:clamp(4px,.55vw,7px);color:#c77dff;min-width:180px;max-width:260px;backdrop-filter:blur(4px);">
+  <div style="color:rgba(199,125,255,.6);font-size:clamp(3px,.4vw,5px);letter-spacing:2px;margin-bottom:6px;">AFD — ESTADO ATUAL</div>
+  <div id="afd-live-state" style="color:#fff;font-size:clamp(5px,.7vw,9px);margin-bottom:4px;"></div>
+  <div id="afd-live-transition" style="color:var(--mint);font-size:clamp(3px,.42vw,5px);opacity:.85;"></div>
+  <div id="afd-live-path" style="color:rgba(199,125,255,.5);font-size:clamp(3px,.38vw,5px);margin-top:4px;line-height:1.6;"></div>
+</div>
+
+<div id="notif"></div>
+<div id="ctrl-hint">← → Mover · [E] Interagir</div>
+<div id="trans-ov"><div id="t-ico">🏢</div><div id="t-txt">Carregando...</div></div>
+
+<script src="JS/script.js"></script>
+</body>
+</html>
