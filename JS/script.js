@@ -33,25 +33,33 @@ const AFD_ALL = [
 
 // AFD do elevador
 const ELEV_STATES = [
-  'PARADO_TERREO', 'PORTAS_ABERTAS', 'PORTAS_FECHANDO',
-  'SUBINDO', 'DESCENDO',
-  'PASSANDO_1', 'PASSANDO_2',
-  'CHEGOU',
-  'FLOOR_1', 'FLOOR_2', 'FLOOR_3',
+  'T_ABERTO', 'T_FECHADO',
+  'A1_ABERTO', 'A1_FECHADO',
+  'A2_ABERTO', 'A2_FECHADO',
+  'A3_ABERTO', 'A3_FECHADO',
+  'SUBINDO_T_1',
+  'SUBINDO_1_2',
+  'SUBINDO_2_3',
+  'DESCENDO_3_2',
+  'DESCENDO_2_1',
+  'DESCENDO_1_T'
 ];
 
 const ELEV_STATES_LABELS = {
-  PARADO_TERREO:   '🏢 Parado no Térreo',
-  PORTAS_ABERTAS:  '🚪 Portas Abertas',
-  PORTAS_FECHANDO: '🔒 Portas Fechando',
-  SUBINDO:         '⬆️ Subindo',
-  DESCENDO:        '⬇️ Descendo',
-  PASSANDO_1:      '🔄 Passando pelo 1',
-  PASSANDO_2:      '🔄 Passando pelo 2',
-  CHEGOU:          '📍 Chegou ao Andar',
-  FLOOR_1:         '🍽️ Andar 1',
-  FLOOR_2:         '💪 Andar 2',
-  FLOOR_3:         '🛋️ Andar 3',
+  T_ABERTO:      '🚪 Térreo aberto',
+  T_FECHADO:     '🔒 Térreo fechado',
+  A1_ABERTO:     '🚪 1º andar aberto',
+  A1_FECHADO:    '🔒 1º andar fechado',
+  A2_ABERTO:     '🚪 2º andar aberto',
+  A2_FECHADO:    '🔒 2º andar fechado',
+  A3_ABERTO:     '🚪 3º andar aberto',
+  A3_FECHADO:    '🔒 3º andar fechado',
+  SUBINDO_T_1:   '⬆️ Subindo T→1',
+  SUBINDO_1_2:   '⬆️ Subindo 1→2',
+  SUBINDO_2_3:   '⬆️ Subindo 2→3',
+  DESCENDO_3_2:  '⬇️ Descendo 3→2',
+  DESCENDO_2_1:  '⬇️ Descendo 2→1',
+  DESCENDO_1_T:  '⬇️ Descendo 1→T'
 };
 
 const GYM_EQUIP = [
@@ -79,10 +87,10 @@ let visitados           = new Set(['LOBBY_IDLE']);
 let t0                  = new Date();
 
 // Elevador / AFD do elevador
-let estadoAtualElev  = 'PARADO_TERREO';
+let estadoAtualElev  = 'T_ABERTO';
 let logAfdElev       = [];
-let caminhoAfdElev   = ['PARADO_TERREO'];
-let visitadosElev    = new Set(['PARADO_TERREO']);
+let caminhoAfdElev   = ['T_ABERTO'];
+let visitadosElev    = new Set(['T_ABERTO']);
 let andarAtualElev   = 0;
 let andarSelecionadoElev = -1;
 let elevadorEmMovimento  = false;
@@ -152,6 +160,32 @@ function limitar(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
+function getEstadoAbertoPorAndar(andar) {
+  return ['T_ABERTO', 'A1_ABERTO', 'A2_ABERTO', 'A3_ABERTO'][andar];
+}
+
+function getEstadoFechadoPorAndar(andar) {
+  return ['T_FECHADO', 'A1_FECHADO', 'A2_FECHADO', 'A3_FECHADO'][andar];
+}
+
+function getLabelAndar(andar) {
+  return ['Térreo', '1º Andar', '2º Andar', '3º Andar'][andar];
+}
+
+function getNumAndar(andar) {
+  return ['T', '1', '2', '3'][andar];
+}
+
+function getEstadoTrecho(origem, destino) {
+  if (origem === 0 && destino === 1) return 'SUBINDO_T_1';
+  if (origem === 1 && destino === 2) return 'SUBINDO_1_2';
+  if (origem === 2 && destino === 3) return 'SUBINDO_2_3';
+  if (origem === 3 && destino === 2) return 'DESCENDO_3_2';
+  if (origem === 2 && destino === 1) return 'DESCENDO_2_1';
+  if (origem === 1 && destino === 0) return 'DESCENDO_1_T';
+  return estadoAtualElev;
+}
+
 // -----------------------------------------------------------------------------
 // AFD — TRANSIÇÕES
 // -----------------------------------------------------------------------------
@@ -169,7 +203,7 @@ function transElev(ev, next) {
   logAfdElev.push({ t: horario(), from: prev, ev, to: next });
   estadoAtualElev = next;
   visitadosElev.add(next);
-  if (!caminhoAfdElev.includes(next)) caminhoAfdElev.push(next);
+  caminhoAfdElev.push(next);
   _atualizarHudLive(prev, next, ev);
 }
 
@@ -184,8 +218,8 @@ function _atualizarHudLive(prev, next, ev) {
   ls.textContent = ELEV_STATES_LABELS[next] || next;
   lt.textContent = (ELEV_STATES_LABELS[prev] || prev) + ' ──[' + ev + ']──▶';
   lp.textContent = 'Caminho: ' + caminhoAfdElev
-    .slice(-4)
-    .map(s => (ELEV_STATES_LABELS[s] || s).replace(/^[^ ]+ /, ''))
+    .slice(-6)
+    .map(s => ELEV_STATES_LABELS[s] || s)
     .join(' → ');
 
   clearTimeout(lv._t);
@@ -833,21 +867,27 @@ function fecharPortas(cb) {
 function abrirPortaElev() {
   if (elevadorEmMovimento) { notificar('Em movimento!'); return; }
   if (_timerPorta) { clearTimeout(_timerPorta); _timerPorta = null; }
+
   tocarTom(440, 0.1);
   setTimeout(() => tocarTom(880, 0.08), 120);
-  transElev('BTN_ABRIR_PORTA', 'PORTAS_ABERTAS');
+
+  transElev('BTN_ABRIR_PORTA', getEstadoAbertoPorAndar(andarAtualElev));
   portasAbertas = true;
+
   document.getElementById('elev-interior-box').style.display = 'flex';
   ['int-door-l','int-door-r'].forEach(id => document.getElementById(id).classList.add('int-open'));
   ['door-l','door-r','floor-door-l','floor-door-r'].forEach(id => document.getElementById(id)?.classList.add('open'));
+
   notificar('🚪 Portas abertas');
 }
 
 function fecharPortaElev() {
   if (elevadorEmMovimento) { notificar('Em movimento!'); return; }
+
   tocarTom(220, 0.12);
-  transElev('BTN_FECHAR_PORTA', 'PORTAS_FECHANDO');
+  transElev('BTN_FECHAR_PORTA', getEstadoFechadoPorAndar(andarAtualElev));
   portasAbertas = false;
+
   ['int-door-l','int-door-r'].forEach(id => document.getElementById(id).classList.remove('int-open'));
   ['door-l','door-r','floor-door-l','floor-door-r'].forEach(id => document.getElementById(id)?.classList.remove('open'));
 }
@@ -872,7 +912,8 @@ function entrarInteriorElevador() {
 
   document.getElementById('elev-interior').classList.add('show');
   document.getElementById('elev-interior-box').style.display = 'flex';
-  transElev('ENTRAR_ELEVADOR', 'PORTAS_ABERTAS');
+
+  transElev('ENTRAR_ELEVADOR', getEstadoAbertoPorAndar(andarAtualElev));
   notificar('Escolha o andar! 🛗');
 }
 
@@ -881,11 +922,11 @@ function atualizarInteriorElev() {
   const lbl   = document.getElementById('elev-strip-label');
   const ind   = document.getElementById('elev-ind-num');
 
-  if (strip) strip.textContent = FNUMS[andarAtualElev];
+  if (strip) strip.textContent = getNumAndar(andarAtualElev);
   if (lbl)   lbl.textContent   = FLOORS[andarAtualElev];
   if (ind) {
-    ind.textContent    = FNUMS[andarAtualElev];
-    ind.style.color    = '#00ff55';
+    ind.textContent = getNumAndar(andarAtualElev);
+    ind.style.color = '#00ff55';
     ind.style.textShadow = '0 0 10px #00ff55,0 0 20px #00cc44';
   }
 
@@ -909,16 +950,25 @@ function selecionarAndar(floor) {
     const b = document.getElementById('ibtn-' + i);
     if (!b) return;
     b.classList.remove('active', 'current');
-    if (i === floor)          b.classList.add('active');
+    if (i === floor) b.classList.add('active');
     else if (i === andarAtualElev) b.classList.add('current');
   });
 
   const ind = document.getElementById('elev-ind-num');
   if (ind) {
-    ind.textContent    = FNUMS[floor];
-    ind.style.color    = '#ffaa00';
+    ind.textContent = getNumAndar(floor);
+    ind.style.color = '#ffaa00';
     ind.style.textShadow = '0 0 12px #ffaa00';
   }
+
+  tocarTom(440, 0.06);
+  transElev('SELECIONAR_ANDAR_' + getNumAndar(floor), getEstadoAbertoPorAndar(andarAtualElev));
+  notificar('🚪 Fechando portas em 1.5s...');
+  elevadorEmMovimento = true;
+
+  const tempoEspera = portasAbertas ? 1500 : 100;
+  _timerPorta = setTimeout(() => { _timerPorta = null; viajar(floor); }, tempoEspera);
+}
 
   tocarTom(440, 0.06);
   transElev('SELECIONAR_ANDAR_' + FNUMS[floor], 'PORTAS_ABERTAS');
@@ -929,11 +979,22 @@ function selecionarAndar(floor) {
   _timerPorta = setTimeout(() => { _timerPorta = null; viajar(floor); }, tempoEspera);
 }
 
+function registrarPercursoFormal(origem, destino) {
+  const dir = destino > origem ? 1 : -1;
+  let atual = origem;
+
+  while (atual !== destino) {
+    const prox = atual + dir;
+    const estadoTrecho = getEstadoTrecho(atual, prox);
+    transElev('MOVER_' + getNumAndar(atual) + '_' + getNumAndar(prox), estadoTrecho);
+    atual = prox;
+  }
+}
+
 function viajar(target) {
   const dir   = target > andarAtualElev ? 1 : -1;
   const steps = Math.abs(target - andarAtualElev);
 
-  transElev(dir > 0 ? 'PRESSIONAR_SUBIR' : 'PRESSIONAR_DESCER', dir > 0 ? 'SUBINDO' : 'DESCENDO');
   portasAbertas = false;
 
   ['int-door-l','int-door-r'].forEach(id => document.getElementById(id).classList.remove('int-open'));
@@ -941,7 +1002,9 @@ function viajar(target) {
 
   fecharPortas(() => {});
   tocarTom(220, 0.12);
-  transElev('FECHAR_PORTAS', 'PORTAS_FECHANDO');
+
+  transElev('FECHAR_PORTAS', getEstadoFechadoPorAndar(andarAtualElev));
+  registrarPercursoFormal(andarAtualElev, target);
 
   setTimeout(() => {
     document.getElementById('elev-interior').classList.remove('show');
@@ -959,14 +1022,14 @@ function _aoChegarAndar(target) {
 
   const numEl = document.getElementById('elev-num');
   if (numEl) {
-    numEl.textContent  = FNUMS[target];
-    numEl.style.color  = target === 0 ? '#ff2222' : '#22ff22';
+    numEl.textContent = getNumAndar(target);
+    numEl.style.color = target === 0 ? '#ff2222' : '#22ff22';
   }
 
   const ind = document.getElementById('elev-ind-num');
   if (ind) {
-    ind.textContent    = FNUMS[target];
-    ind.style.color    = '#00ff55';
+    ind.textContent = getNumAndar(target);
+    ind.style.color = '#00ff55';
     ind.style.textShadow = '0 0 10px #00ff55';
   }
 
@@ -978,11 +1041,10 @@ function _aoChegarAndar(target) {
   });
 
   const fen = document.getElementById('floor-elev-num');
-  if (fen) fen.textContent = FNUMS[target];
+  if (fen) fen.textContent = getNumAndar(target);
 
   tr('ARRIVE', 'ELEV_OPEN');
-  const estadosAndar = ['PARADO_TERREO', 'FLOOR_1', 'FLOOR_2', 'FLOOR_3'];
-  transElev('CHEGAR_ANDAR_' + FNUMS[target], estadosAndar[target]);
+  transElev('CHEGAR_ANDAR_' + getNumAndar(target), getEstadoAbertoPorAndar(target));
   notificar('📍 ' + FLOOR_ICONS[target] + ' ' + FLOORS[target]);
   abrirPortas();
 
@@ -990,11 +1052,8 @@ function _aoChegarAndar(target) {
   document.getElementById('floor-scene').classList.remove('show');
   andarAberto = false;
 
-  if (target === 0) {
-    _voltarTerreo();
-  } else {
-    _entrarAndarViaElevador(target);
-  }
+  if (target === 0) _voltarTerreo();
+  else _entrarAndarViaElevador(target);
 }
 
 function _voltarTerreo() {
@@ -1254,7 +1313,8 @@ function sairAndar() {
 
 function abrirRelatorio(final = false) {
   modalAberto = true;
-  const cn  = { mulher: 'Helo 👩', homem: 'Pedro 👨', gato: 'Apollo 🐱' };
+
+  const cn = { mulher: 'Helo 👩', homem: 'Pedro 👨', gato: 'Apollo 🐱' };
   const dur = Math.round((new Date() - t0) / 1000);
 
   // Estados visitados
@@ -1263,11 +1323,12 @@ function abrirRelatorio(final = false) {
   ELEV_STATES.forEach(s => {
     const div = document.createElement('div');
     div.className = 'sc';
-    if (s === estadoAtualElev)   div.classList.add('cur');
-    else if (visitadosElev.has(s)) div.classList.add('vis');
+    const visitado = visitadosElev.has(s);
+    const atual = s === estadoAtualElev;
     div.innerHTML = `
-      <span style="font-size:5px;opacity:.7">${s}</span><br>
-      <span style="font-size:4px;color:var(--lilac)">${(ELEV_STATES_LABELS[s] || '').replace(/^[^ ]+ /, '')}</span>
+      <span style="color:${atual ? 'var(--yellow)' : visitado ? 'var(--mint)' : 'rgba(255,255,255,.35)'}">
+        ${ELEV_STATES_LABELS[s] || s}
+      </span>
     `;
     sw.appendChild(div);
   });
@@ -1293,12 +1354,20 @@ function abrirRelatorio(final = false) {
     '</span>';
 
   // Resumo
-  const andares = [...visitadosElev]
-    .filter(s => ['FLOOR_1','FLOOR_2','FLOOR_3','PARADO_TERREO'].includes(s))
-    .map(s => ELEV_STATES_LABELS[s])
-    .join(', ') || 'Nenhum';
+  const andares = [...new Set(
+    [...visitadosElev]
+      .filter(s => ['T_ABERTO','T_FECHADO','A1_ABERTO','A1_FECHADO','A2_ABERTO','A2_FECHADO','A3_ABERTO','A3_FECHADO'].includes(s))
+      .map(s => {
+        if (s.startsWith('T_')) return 'Térreo';
+        if (s.startsWith('A1_')) return '1º Andar';
+        if (s.startsWith('A2_')) return '2º Andar';
+        if (s.startsWith('A3_')) return '3º Andar';
+        return s;
+      })
+  )].join(', ') || 'Nenhum';
+
   const nViagens = logAfdElev.filter(e =>
-    e.ev.startsWith('PRESSIONAR') || e.ev.startsWith('SELECIONAR')
+    e.ev.startsWith('MOVER_') || e.ev.startsWith('SELECIONAR_')
   ).length;
 
   document.getElementById('afd-summary').innerHTML = `
@@ -1312,7 +1381,7 @@ function abrirRelatorio(final = false) {
 
   desenharDiagramaAFD();
   document.getElementById('report-modal').classList.add('show');
-  if (final) transElev('FINALIZAR', 'PARADO_TERREO');
+  if (final) transElev('FINALIZAR', getEstadoAbertoPorAndar(andarAtualElev));
 }
 
 function fecharModal(id) {
@@ -1331,37 +1400,39 @@ function voltarSelecao() {
   ov.classList.add('show');
 
   setTimeout(() => {
-    // Reset de telas
-    document.getElementById('hud').style.display            = 'none';
+    document.getElementById('hud').style.display       = 'none';
     document.getElementById('viewport').classList.remove('active');
-    document.getElementById('ctrl-hint').style.display      = 'none';
+    document.getElementById('ctrl-hint').style.display = 'none';
     document.getElementById('floor-scene').classList.remove('show');
     document.getElementById('elev-interior').classList.remove('show');
     document.getElementById('elev-travel').classList.remove('show');
     document.getElementById('door-l').classList.remove('open');
     document.getElementById('door-r').classList.remove('open');
-    document.getElementById('elev-num').textContent  = 'T';
-    document.getElementById('elev-num').style.color  = '#ff2222';
+    document.getElementById('elev-num').textContent = 'T';
+    document.getElementById('elev-num').style.color = '#ff2222';
 
-    // Reset de estado
     andarAberto         = false;
     estadoAtual         = 'LOBBY_IDLE';
     logAfd              = [];
     caminhoAfd          = ['LOBBY_IDLE'];
     visitados           = new Set(['LOBBY_IDLE']);
     t0                  = new Date();
+
     logAfdElev          = [];
-    caminhoAfdElev      = ['PARADO_TERREO'];
-    visitadosElev       = new Set(['PARADO_TERREO']);
-    estadoAtualElev     = 'PARADO_TERREO';
+    caminhoAfdElev      = ['T_ABERTO'];
+    visitadosElev       = new Set(['T_ABERTO']);
+    estadoAtualElev     = 'T_ABERTO';
     andarAtualElev      = 0;
     elevadorEmMovimento = false;
+
     contadorDoces       = 0;
     itemNaMao           = null;
     jogadorX            = 0;
     teclas              = {};
     modalAberto         = false;
     olhandoDireita      = true;
+    portasAbertas       = true;
+    andarSelecionadoElev = -1;
 
     document.getElementById('screen-start').style.display = 'flex';
     iniciarStartScreen();
