@@ -32,7 +32,7 @@
 
 <div align="center">
 
-<sub>Disciplina: <b>Linguagens Formais e Autômatos</b> — Universidade São Judas Tadeu · 2025</sub>
+<sub>Disciplina: <b>Linguagens Formais e Autômatos</b> — Universidade São Judas Tadeu · 2026</sub>
 
 <br><br>
 
