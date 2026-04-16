@@ -19,12 +19,8 @@
       <div class="start-logo-sub">AFD ELEVADOR</div>
     </div>
     <div class="start-btns">
-      <button class="start-btn-play" onclick="mostrarSelecao()">
-        ▶ &nbsp;START
-      </button>
-      <button class="start-btn-candy" onclick="window.open('https://b3ery.github.io/MachineCandy/','_blank')">
-        🍬 &nbsp;MEOW CANDY
-      </button>
+      <button class="start-btn-play" onclick="mostrarSelecao()">▶ &nbsp;START</button>
+      <button class="start-btn-candy" onclick="window.open('https://b3ery.github.io/MachineCandy/','_blank')">🍬 &nbsp;MEOW CANDY</button>
     </div>
     <div class="start-footer">PRESSIONE START PARA JOGAR</div>
   </div>
@@ -110,10 +106,7 @@
         <div class="elev-fascia">
           <div class="elev-display">
             <span id="elev-num">T</span>
-            <div class="elev-arrows-disp">
-              <span id="arr-up">▲</span>
-              <span id="arr-dn">▼</span>
-            </div>
+            <div class="elev-arrows-disp"><span id="arr-up">▲</span><span id="arr-dn">▼</span></div>
           </div>
         </div>
         <div class="elev-body">
@@ -294,9 +287,7 @@
 <div class="modal" id="report-modal">
   <div class="modal-box rpt-box">
     <div class="rpt-title">🛗 RELATÓRIO AFD — ELEVADOR MEOW TOWER</div>
-
     <div class="rpt-cols">
-      <!-- Coluna esquerda: resumo + diagrama -->
       <div class="rpt-col-left">
         <div class="rpt-sec">
           <div class="rpt-sec-h">📊 Resumo da Sessão</div>
@@ -304,10 +295,9 @@
         </div>
         <div class="rpt-sec">
           <div class="rpt-sec-h">🔵 Diagrama AFD — Estados e Transições</div>
-          <canvas id="afd-canvas" width="420" height="320" style="width:100%;border-radius:8px;background:#0a0018;display:block;"></canvas>
+          <canvas id="afd-canvas" width="620" height="420" style="width:100%;border-radius:8px;background:#0a0018;display:block;"></canvas>
         </div>
       </div>
-      <!-- Coluna direita: trajetória + log -->
       <div class="rpt-col-right">
         <div class="rpt-sec">
           <div class="rpt-sec-h">🗺️ Estados Visitados</div>
@@ -323,7 +313,6 @@
         </div>
       </div>
     </div>
-
     <div class="rpt-btn-row">
       <button class="rpt-btn" onclick="fecharModal('report-modal')">✕ Fechar</button>
       <button class="rpt-btn danger" onclick="voltarSelecao()">↩ Nova Sessão</button>
@@ -331,7 +320,7 @@
   </div>
 </div>
 
-<!-- HUD do AFD em tempo real (durante viagem) -->
+<!-- HUD AFD em tempo real -->
 <div id="afd-live" style="display:none;position:fixed;bottom:60px;right:16px;z-index:500;background:rgba(10,0,30,.85);border:1px solid rgba(199,125,255,.3);border-radius:8px;padding:8px 12px;font-family:'Press Start 2P',monospace;font-size:clamp(4px,.55vw,7px);color:#c77dff;min-width:180px;max-width:260px;backdrop-filter:blur(4px);">
   <div style="color:rgba(199,125,255,.6);font-size:clamp(3px,.4vw,5px);letter-spacing:2px;margin-bottom:6px;">AFD — ESTADO ATUAL</div>
   <div id="afd-live-state" style="color:#fff;font-size:clamp(5px,.7vw,9px);margin-bottom:4px;"></div>
